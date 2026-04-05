@@ -2431,6 +2431,23 @@
       </div>
 
       <div class="contact-form" role="form" aria-label="Project inquiry form">
+
+        <!-- Web3Forms hidden fields -->
+        <input type="hidden" name="access_key" value="0eb95ea9-aa3d-48ef-a9f1-151bbbd2fa3f" />
+        <input type="hidden" name="subject" value="New Project Inquiry — Brothers Build Contractors" />
+        <input type="hidden" name="from_name" value="brobco.com Contact Form" />
+        <input type="hidden" name="redirect" value="false" />
+
+        <!-- Success message (hidden by default) -->
+        <div id="form-success" style="display:none;background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.3);border-radius:4px;padding:24px;text-align:center;margin-bottom:20px;">
+          <div style="font-family:var(--font-head);font-size:24px;font-weight:800;color:#059669;margin-bottom:8px;">✓ Message Sent!</div>
+          <div style="font-size:14px;color:var(--muted);">We'll be in touch within 1 business day.</div>
+        </div>
+
+        <div id="form-error" style="display:none;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.25);border-radius:4px;padding:16px;text-align:center;margin-bottom:20px;font-size:14px;color:#DC2626;">
+          Something went wrong. Please try again or call us directly.
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="fname">First Name *</label>
@@ -2490,7 +2507,7 @@
           <textarea id="message" name="message" rows="4" placeholder="Tell us about your project, timeline, or any specific concerns…"></textarea>
         </div>
 
-        <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="handleSubmit()">
+        <button type="button" id="submit-btn" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="handleSubmit()">
           Send Inquiry
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
@@ -2680,14 +2697,62 @@
   }
 
   // Form submit (placeholder — connect to backend/Formspree/etc.)
-  function handleSubmit() {
-    const email = document.getElementById('email').value;
+  async function handleSubmit() {
+    const email = document.getElementById('email').value.trim();
     const service = document.getElementById('service').value;
-    if (!email || !service) {
-      alert('Please fill in your email and select a service type.');
+    const fname = document.getElementById('fname').value.trim();
+
+    // Hide previous messages
+    document.getElementById('form-success').style.display = 'none';
+    document.getElementById('form-error').style.display = 'none';
+
+    if (!fname || !email || !service) {
+      document.getElementById('form-error').style.display = 'block';
+      document.getElementById('form-error').textContent = 'Please fill in First Name, Email, and Service type.';
       return;
     }
-    alert('Thank you! We\'ll be in touch within 1 business day.');
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = 'Sending… <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
+
+    const formData = {
+      access_key: '0eb95ea9-aa3d-48ef-a9f1-151bbbd2fa3f',
+      subject: 'New Project Inquiry — Brothers Build Contractors',
+      from_name: 'brobco.com Contact Form',
+      name: fname + ' ' + (document.getElementById('lname').value.trim()),
+      email: email,
+      phone: document.getElementById('phone').value,
+      company: document.getElementById('company').value,
+      service: service,
+      sqft: document.getElementById('sqft').value,
+      message: document.getElementById('message').value,
+    };
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        document.getElementById('form-success').style.display = 'block';
+        // Reset form fields
+        ['fname','lname','email','phone','company','message'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('service').selectedIndex = 0;
+        document.getElementById('sqft').selectedIndex = 0;
+        btn.innerHTML = '✓ Message Sent <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>';
+        btn.style.background = '#059669';
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      document.getElementById('form-error').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Send Inquiry <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    }
   }
 
   // Nav scroll effect
