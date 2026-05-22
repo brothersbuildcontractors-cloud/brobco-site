@@ -1,0 +1,5 @@
+# www to non-www
+https://www.brobco.com/* https://brobco.com/:splat 301!
+
+# Trailing slash normalization
+https://brobco.com/index.html https://brobco.com/ 301!
